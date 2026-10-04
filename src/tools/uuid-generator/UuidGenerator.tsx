@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { FingerprintPattern, RefreshCw, Trash } from 'lucide-react'
 
 import { ToolLayout } from '@/components/tools/ToolLayout'
@@ -10,7 +10,7 @@ import { StatusMessage } from '@/components/ui/StatusMessage'
 import { TextField } from '@/components/ui/TextField'
 import type { ToolComponentProps } from '@/types/tool'
 
-import { clampCount, generateUuids } from './logic'
+import { generateUuids, parseUuidCount } from './logic'
 import { DEFAULT_UUID_COUNT, MAX_UUIDS, MIN_UUIDS } from './types'
 
 export function UuidGenerator({ tool }: ToolComponentProps) {
@@ -18,14 +18,13 @@ export function UuidGenerator({ tool }: ToolComponentProps) {
   const [uuids, setUuids] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
-  const parsedCount = Number.parseInt(count, 10)
-  const isCountValid =
-    !Number.isNaN(parsedCount) && parsedCount >= MIN_UUIDS && parsedCount <= MAX_UUIDS
-  const effectiveCount = clampCount(Number.isNaN(parsedCount) ? DEFAULT_UUID_COUNT : parsedCount)
+  const countResult = useMemo(() => parseUuidCount(count), [count])
 
   const generate = () => {
+    if (!countResult.ok) return
+
     try {
-      setUuids(generateUuids(effectiveCount))
+      setUuids(generateUuids(countResult.value))
       setError(null)
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Failed to generate UUIDs.')
@@ -55,11 +54,7 @@ export function UuidGenerator({ tool }: ToolComponentProps) {
               max={MAX_UUIDS}
               value={count}
               onChange={(event) => setCount(event.target.value)}
-              errorMessage={
-                isCountValid
-                  ? undefined
-                  : `Enter a whole number between ${MIN_UUIDS} and ${MAX_UUIDS}.`
-              }
+              errorMessage={countResult.ok ? undefined : countResult.message}
               className="w-full sm:w-32"
             />
             <div className="flex flex-wrap items-center gap-2">
@@ -67,6 +62,7 @@ export function UuidGenerator({ tool }: ToolComponentProps) {
                 variant="primary"
                 icon={<RefreshCw className="size-4" aria-hidden="true" />}
                 onClick={generate}
+                disabled={!countResult.ok}
               >
                 Generate
               </Button>

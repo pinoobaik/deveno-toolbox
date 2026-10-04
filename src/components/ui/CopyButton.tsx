@@ -47,7 +47,6 @@ export function CopyButton({
       disabled={isDisabled}
       aria-label={label ? undefined : accessibleLabel}
       aria-live={label ? 'polite' : undefined}
-      title={label ? accessibleLabel : undefined}
       className={className}
       onClick={() => void copy(value)}
       icon={

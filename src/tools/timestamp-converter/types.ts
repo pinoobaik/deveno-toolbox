@@ -5,10 +5,8 @@ export interface TimestampResultSuccess {
   readonly seconds: number
   readonly milliseconds: number
   readonly localIso: string
-  readonly utcIso: string
   readonly localDisplay: string
   readonly utcDisplay: string
-  readonly isValidDate: boolean
 }
 
 export interface TimestampResultFailure {

@@ -2,7 +2,9 @@ import { Link } from 'react-router-dom'
 
 import { ToolCard } from '@/components/tools/ToolCard'
 import { APP_NAME } from '@/lib/constants'
-import { tools, type ToolCategory } from '@/tools/registry'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { tools } from '@/tools/registry'
+import type { ToolCategory } from '@/types/tool'
 
 const CATEGORY_LABELS: Record<ToolCategory, string> = {
   data: 'Data',
@@ -12,6 +14,10 @@ const CATEGORY_LABELS: Record<ToolCategory, string> = {
 const CATEGORY_ORDER: readonly ToolCategory[] = ['data', 'developer']
 
 export function HomePage() {
+  useDocumentTitle(APP_NAME)
+
+  const featuredTool = tools[0]
+
   return (
     <div className="flex flex-col gap-8">
       <section className="flex flex-col gap-3">
@@ -53,13 +59,15 @@ export function HomePage() {
         </ul>
       </section>
 
-      <p className="text-xs text-neutral-600">
-        Looking for something specific? Pick a tool from the sidebar, or{' '}
-        <Link to="/tools/json-formatter" className="text-sky-400 hover:text-sky-300">
-          start with the JSON Formatter
-        </Link>
-        .
-      </p>
+      {featuredTool === undefined ? null : (
+        <p className="text-xs text-neutral-600">
+          Looking for something specific? Pick a tool from the sidebar, or{' '}
+          <Link to={`/tools/${featuredTool.id}`} className="text-sky-400 hover:text-sky-300">
+            start with the {featuredTool.name}
+          </Link>
+          .
+        </p>
+      )}
     </div>
   )
 }

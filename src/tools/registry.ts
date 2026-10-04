@@ -1,9 +1,7 @@
 import { Braces, Clock, FingerprintPattern } from 'lucide-react'
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 
-import type { ToolComponentProps, ToolDefinition } from '@/types/tool'
-
-export type ToolCategory = 'data' | 'developer'
+import type { ToolCategory, ToolComponentProps, ToolDefinition } from '@/types/tool'
 
 /**
  * Single source of truth for navigation, routing and the tool index.

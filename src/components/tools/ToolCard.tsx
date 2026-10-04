@@ -1,6 +1,5 @@
 import { Link } from 'react-router-dom'
 
-import { Card } from '@/components/ui/Card'
 import { cn } from '@/lib/cn'
 import type { ToolDefinition } from '@/types/tool'
 
@@ -32,15 +31,5 @@ export function ToolCard({ tool, className }: ToolCardProps) {
         <p className="mt-1 text-xs leading-relaxed text-neutral-500">{tool.description}</p>
       </div>
     </Link>
-  )
-}
-
-export function ToolCardSkeleton() {
-  return (
-    <Card className="h-full animate-pulse p-4">
-      <div className="size-9 rounded-md bg-neutral-800" />
-      <div className="mt-3 h-3 w-24 rounded bg-neutral-800" />
-      <div className="mt-2 h-3 w-full rounded bg-neutral-800/70" />
-    </Card>
   )
 }

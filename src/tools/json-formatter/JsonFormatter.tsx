@@ -11,24 +11,28 @@ import { TextArea } from '@/components/ui/TextArea'
 import { formatBytes, measureText } from '@/lib/text'
 import type { ToolComponentProps } from '@/types/tool'
 
-import { formatJson, minifyJson, parseJson, sortJsonKeys } from './logic'
-import type { JsonIndent } from './types'
+import { parseJson, stringifyJson } from './logic'
+import type { StringifyOptions } from './types'
 
 const SAMPLE_JSON = '{"name":"John","age":20,"hobbies":["reading","cycling"]}'
 
 type OutputMode = 'pretty' | 'minified'
 
-const INDENT_OPTIONS: ReadonlyArray<{ value: JsonIndent; label: string }> = [
+const INDENT_OPTIONS: ReadonlyArray<{
+  value: NonNullable<StringifyOptions['indent']>
+  label: string
+}> = [
   { value: 2, label: '2 spaces' },
   { value: 4, label: '4 spaces' },
-  { value: 'tab', label: 'Tab' },
+  { value: '\t', label: 'Tab' },
 ]
 
 export function JsonFormatter({ tool }: ToolComponentProps) {
   const [input, setInput] = useState('')
   const [output, setOutput] = useState('')
+  const [outputError, setOutputError] = useState<string | null>(null)
   const [outputMode, setOutputMode] = useState<OutputMode>('pretty')
-  const [indent, setIndent] = useState<JsonIndent>(2)
+  const [indent, setIndent] = useState<NonNullable<StringifyOptions['indent']>>(2)
   const [isSorted, setIsSorted] = useState(false)
 
   const validation = useMemo(() => parseJson(input), [input])
@@ -36,20 +40,20 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
   const outputStats = useMemo(() => measureText(output), [output])
 
   const run = (mode: OutputMode, sortKeys = false) => {
-    const result = parseJson(input)
+    if (!validation.valid) return
 
-    if (!result.valid) return
+    const result = stringifyJson(
+      validation.value,
+      mode === 'pretty' ? { indent, sortKeys } : { sortKeys },
+    )
 
-    const next =
-      mode === 'pretty'
-        ? sortKeys
-          ? JSON.stringify(sortJsonKeys(result.value), null, indent)
-          : formatJson(input, indent)
-        : sortKeys
-          ? JSON.stringify(sortJsonKeys(result.value))
-          : minifyJson(input)
+    if (!result.ok) {
+      setOutputError(result.message)
+      return
+    }
 
-    setOutput(next)
+    setOutputError(null)
+    setOutput(result.text)
     setOutputMode(mode)
     setIsSorted(sortKeys)
   }
@@ -57,12 +61,14 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
   const clear = () => {
     setInput('')
     setOutput('')
+    setOutputError(null)
     setIsSorted(false)
   }
 
   const loadSample = () => {
     setInput(SAMPLE_JSON)
     setOutput('')
+    setOutputError(null)
     setIsSorted(false)
   }
 
@@ -123,13 +129,15 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
             />
 
             {validation.valid ? (
-              <StatusMessage tone="success">Input is valid JSON.</StatusMessage>
+              <StatusMessage tone="success" live="off">
+                Input is valid JSON.
+              </StatusMessage>
             ) : validation.kind === 'empty' ? (
-              <StatusMessage tone="info">
+              <StatusMessage tone="info" live="off">
                 Waiting for input. Load the sample to see the tool in action.
               </StatusMessage>
             ) : (
-              <StatusMessage tone="danger" title="Invalid JSON">
+              <StatusMessage tone="danger" title="Invalid JSON" live="off">
                 {validation.message}
               </StatusMessage>
             )}
@@ -161,8 +169,10 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
                   id="json-indent"
                   value={String(indent)}
                   onChange={(event) => {
-                    const next = event.target.value
-                    setIndent(next === 'tab' ? 'tab' : (Number(next) as 2 | 4))
+                    const next = INDENT_OPTIONS.find(
+                      (option) => String(option.value) === event.target.value,
+                    )
+                    if (next !== undefined) setIndent(next.value)
                   }}
                   disabled={outputMode !== 'pretty'}
                   className="h-8 rounded-md border border-neutral-800 bg-neutral-900 px-2 text-xs text-neutral-300 disabled:opacity-50"
@@ -177,7 +187,13 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
               </>
             }
           />
-          <CardBody className="flex flex-1 flex-col">
+          <CardBody className="flex flex-1 flex-col gap-3">
+            {outputError ? (
+              <StatusMessage tone="danger" title="Cannot format this JSON" live="off">
+                {outputError}
+              </StatusMessage>
+            ) : null}
+
             {output.length > 0 ? (
               <pre
                 aria-label="Formatted JSON output"

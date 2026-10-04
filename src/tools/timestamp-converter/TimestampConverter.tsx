@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { CalendarClock, Timer } from 'lucide-react'
 
 import { ToolLayout } from '@/components/tools/ToolLayout'
@@ -11,7 +11,7 @@ import { TextField } from '@/components/ui/TextField'
 import { cn } from '@/lib/cn'
 import type { ToolComponentProps } from '@/types/tool'
 
-import { dateToTimestamp, hasExplicitTimezone, timestampToDate } from './logic'
+import { dateToTimestamp, interpretDateInput, timestampToDate } from './logic'
 import type { TimestampResult } from './types'
 
 type Direction = 'timestamp' | 'date'
@@ -24,8 +24,10 @@ export function TimestampConverter({ tool }: ToolComponentProps) {
   const [dateInput, setDateInput] = useState('')
   const [direction, setDirection] = useState<Direction>('timestamp')
 
-  const timestampResult = timestampToDate(timestampInput)
-  const dateResult = dateToTimestamp(dateInput)
+  const timestampResult = useMemo(() => timestampToDate(timestampInput), [timestampInput])
+  const dateResult = useMemo(() => dateToTimestamp(dateInput), [dateInput])
+  const dateInterpretation = useMemo(() => interpretDateInput(dateInput), [dateInput])
+
   const activeResult: TimestampResult =
     direction === 'timestamp' ? timestampResult : dateResult
 
@@ -101,7 +103,7 @@ export function TimestampConverter({ tool }: ToolComponentProps) {
                 setDirection('date')
               }}
               className="font-mono"
-              description="ISO 8601 is safest. A value without Z or an offset is read as your local time."
+              description="ISO 8601 is safest. A date and time without Z or an offset is read as your local time; a date only value such as 2024-01-15 is read as UTC midnight."
               errorMessage={dateResult.ok ? undefined : dateResult.message}
             />
 
@@ -112,7 +114,7 @@ export function TimestampConverter({ tool }: ToolComponentProps) {
               </dl>
             ) : null}
 
-            {!hasExplicitTimezone(dateInput) && dateResult.ok ? (
+            {dateInterpretation.assumesLocalTime && dateResult.ok ? (
               <StatusMessage tone="warning" title="No timezone in input">
                 The value was interpreted in your local timezone ({dateResult.localDisplay}).
               </StatusMessage>

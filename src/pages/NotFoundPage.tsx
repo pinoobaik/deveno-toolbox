@@ -2,11 +2,15 @@ import { Link } from 'react-router-dom'
 import { Compass } from 'lucide-react'
 
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useDocumentTitle } from '@/lib/useDocumentTitle'
 
 export function NotFoundPage() {
+  useDocumentTitle('Page not found')
+
   return (
     <div className="py-10">
       <EmptyState
+        titleAs="h1"
         icon={<Compass className="size-7" />}
         title="Page not found"
         description="The page you were looking for does not exist or has been moved."

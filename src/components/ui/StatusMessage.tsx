@@ -25,22 +25,43 @@ const TONE_LABELS: Record<StatusTone, string> = {
   danger: 'Error',
 }
 
+/** Default announcement politeness: problems interrupt, progress does not. */
+const TONE_LIVE: Record<StatusTone, LiveMode> = {
+  info: 'polite',
+  success: 'polite',
+  warning: 'polite',
+  danger: 'assertive',
+}
+
+export type LiveMode = 'off' | 'polite' | 'assertive'
+
 interface StatusMessageProps {
   tone: StatusTone
   title?: string
   children: ReactNode
   className?: string
+  /**
+   * Live region politeness. Defaults to the tone: `assertive` for `danger`,
+   * `polite` otherwise. Pass `off` for messages that re-render on every
+   * keystroke, where announcing each update would flood a screen reader.
+   */
+  live?: LiveMode
 }
 
 /**
  * Communicates status using an icon plus a text label, so meaning is never
  * carried by color alone.
  */
-export function StatusMessage({ tone, title, children, className }: StatusMessageProps) {
+export function StatusMessage({ tone, title, children, className, live }: StatusMessageProps) {
   const icon = TONE_ICONS[tone]
+  const politeness = live ?? TONE_LIVE[tone]
+  const isAssertive = politeness === 'assertive'
 
   return (
     <div
+      role={politeness === 'off' ? undefined : isAssertive ? 'alert' : 'status'}
+      aria-live={politeness === 'off' ? undefined : politeness}
+      aria-atomic={politeness === 'off' ? undefined : true}
       className={cn(
         'flex items-start gap-2.5 rounded-md border px-3 py-2.5 text-sm',
         TONE_CLASSES[tone],

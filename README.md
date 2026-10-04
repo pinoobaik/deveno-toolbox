@@ -9,19 +9,27 @@ consistent app shell, routing, a reusable component set, and three working tools
 ## Features
 
 - **JSON Formatter** - pretty print, minify, sort keys, validate. Invalid input reports a
-  readable reason plus the line and column of the failure.
+  readable reason plus the line and column of the failure when the engine reports a position.
+  Input is capped at 1,000,000 characters and 256 levels of nesting.
 - **UUID Generator** - generate 1-20 v4 UUIDs from `crypto.randomUUID()`, copy individually
-  or all at once.
+  or all at once. The amount field only accepts a plain whole number in range.
 - **Timestamp Converter** - convert Unix timestamps (seconds or milliseconds) to dates and
-  back, showing Unix seconds, Unix milliseconds, local time, and UTC.
+  back, showing Unix seconds, Unix milliseconds, local time, and UTC. A date-only ISO value
+  such as `2024-01-15` is read as UTC midnight, matching the ECMAScript definition; a date and
+  time without a zone is read as local time and says so.
 
 Shared behaviour:
 
-- Dark, responsive layout with a sticky sidebar on desktop and a drawer on mobile.
-- Client-side routing, so tools are lazy loaded and each tool has its own URL.
+- Dark, responsive layout with a sticky sidebar on desktop and a drawer on mobile. The mobile
+  drawer is a modal dialog: focus moves into it, is trapped while open, and returns to the
+  trigger on close.
+- Client-side routing, so tools are lazy loaded and each tool has its own URL. Each route sets
+  its own `document.title`.
 - Copy-to-clipboard with inline success and failure feedback.
 - Keyboard accessible with visible focus states, labelled inputs, and status messages that
   pair an icon and text label with colour.
+- A render error in any tool is caught by an error boundary that keeps the shell usable and
+  offers a retry.
 
 ## Tech stack
 
@@ -33,6 +41,7 @@ Shared behaviour:
 | Styling | Tailwind CSS 4 |
 | Icons | lucide-react |
 | Routing | React Router 7 |
+| Tests | Vitest 5 |
 
 State is plain React state and hooks. There is no state management library, and JSON/UUID
 work uses native `JSON.parse`, `JSON.stringify`, and `crypto.randomUUID()`.
@@ -60,7 +69,19 @@ Other scripts:
 npm run build      # type-check with tsc -b, then build to dist/
 npm run preview    # serve the production build locally
 npm run typecheck  # type-check only
+npm run test       # run the logic tests once
+npm run test:watch # run the logic tests in watch mode
 ```
+
+## Tests
+
+```bash
+npm run test
+```
+
+Vitest covers the pure `logic.ts` layer of each tool, which is where the parsing and
+conversion rules live. Component behaviour is exercised through those functions rather than
+through DOM-level tests. Test files sit next to the code they cover, as `logic.test.ts`.
 
 ## Build
 
@@ -83,7 +104,7 @@ dev-toolbox/
 │   └── favicon.svg
 ├── src/
 │   ├── components/
-│   │   ├── layout/        # AppLayout, Header, Sidebar, MobileNav
+│   │   ├── layout/        # AppLayout, AppErrorBoundary, Header, Sidebar, MobileNav
 │   │   ├── tools/         # ToolCard, ToolLayout
 │   │   └── ui/            # Button, Card, CopyButton, EmptyState, StatusMessage,
 │   │                     # TextArea, TextField
@@ -93,17 +114,20 @@ dev-toolbox/
 │   │   ├── json-formatter/
 │   │   │   ├── JsonFormatter.tsx
 │   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
 │   │   │   └── types.ts
 │   │   ├── uuid-generator/
 │   │   │   ├── UuidGenerator.tsx
 │   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
 │   │   │   └── types.ts
 │   │   └── timestamp-converter/
 │   │       ├── TimestampConverter.tsx
 │   │       ├── logic.ts
+│   │       ├── logic.test.ts
 │   │       └── types.ts
-│   ├── lib/               # shared helpers: cn, clipboard, text metrics, constants
-│   ├── types/             # ToolDefinition, ToolComponentProps, StatusTone
+│   ├── lib/               # shared helpers: cn, clipboard, text metrics, title hook
+│   ├── types/             # ToolDefinition, ToolCategory, ToolComponentProps, StatusTone
 │   ├── App.tsx
 │   ├── main.tsx
 │   └── index.css
@@ -113,7 +137,8 @@ dev-toolbox/
 ├── tsconfig.json
 ├── tsconfig.app.json
 ├── tsconfig.node.json
-└── vite.config.ts
+├── vite.config.ts
+└── vitest.config.ts
 ```
 
 ### How a tool is organised
@@ -124,6 +149,10 @@ Each tool folder keeps presentation and logic apart:
 - `logic.ts` - pure functions. They never throw; they return a result object so the UI can
   render an error instead of crashing.
 - `types.ts` - the types for that tool, plus its result shapes.
+
+Error messages never embed the submitted document. JSON and date inputs are echoed back only
+as a short, length capped fragment, and a `JSON.parse` failure is reduced to a fixed reason
+plus a position, so neither raw engine wording nor file contents reach the screen.
 
 `src/tools/registry.ts` is the single source of truth for navigation, routing, and the tool
 index. Adding a tool means creating the folder, adding one entry to `tools`, and the sidebar,
@@ -146,6 +175,7 @@ routes, and home page pick it up automatically.
 - [x] JSON Formatter
 - [x] UUID Generator
 - [x] Timestamp Converter
+- [x] Logic test suite (Vitest)
 - [ ] Base64 Encoder / Decoder
 - [ ] URL Encoder / Decoder
 - [ ] JWT Decoder

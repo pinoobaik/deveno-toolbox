@@ -51,7 +51,7 @@ export function TextField({
         aria-describedby={describedBy}
         className={cn(
           'h-9 w-full rounded-md border bg-neutral-900 px-3 text-sm text-neutral-100',
-          'placeholder:text-neutral-600 focus:outline-none',
+          'placeholder:text-neutral-600',
           errorMessage
             ? 'border-red-800 focus:border-red-500'
             : 'border-neutral-800 focus:border-neutral-600',

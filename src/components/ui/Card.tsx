@@ -5,7 +5,7 @@ import { cn } from '@/lib/cn'
 interface CardProps {
   children: ReactNode
   className?: string
-  as?: 'div' | 'section' | 'article' | 'aside'
+  as?: 'div' | 'section'
 }
 
 export function Card({ children, className, as: Tag = 'div' }: CardProps) {

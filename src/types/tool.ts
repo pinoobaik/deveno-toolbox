@@ -1,5 +1,8 @@
 import type { LucideIcon } from 'lucide-react'
 
+/** Grouping used by the home page index. */
+export type ToolCategory = 'data' | 'developer'
+
 /** A tool that can be registered in the sidebar / tool index. */
 export interface ToolDefinition {
   /** URL segment, e.g. `json-formatter`. */

@@ -4,25 +4,25 @@ import { Link } from 'react-router-dom'
 import { APP_NAME, GITHUB_URL } from '@/lib/constants'
 
 interface HeaderProps {
-  onMenuClick: (() => void) | undefined
+  onMenuClick: () => void
+  isMenuOpen: boolean
 }
 
-export function Header({ onMenuClick }: HeaderProps) {
+export function Header({ onMenuClick, isMenuOpen }: HeaderProps) {
   return (
     <header className="sticky top-0 z-30 border-b border-neutral-800 bg-neutral-950/90 backdrop-blur">
       <div className="mx-auto flex h-14 w-full max-w-7xl items-center justify-between gap-3 px-4 sm:px-6">
         <div className="flex min-w-0 items-center gap-2">
-          {onMenuClick ? (
-            <button
-              type="button"
-              onClick={onMenuClick}
-              aria-haspopup="dialog"
-              className="-ml-1 inline-flex size-9 items-center justify-center rounded-md text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 lg:hidden"
-            >
-              <Menu className="size-5" aria-hidden="true" />
-              <span className="sr-only">Open tools menu</span>
-            </button>
-          ) : null}
+          <button
+            type="button"
+            onClick={onMenuClick}
+            aria-haspopup="dialog"
+            aria-expanded={isMenuOpen}
+            className="-ml-1 inline-flex size-9 items-center justify-center rounded-md text-neutral-400 hover:bg-neutral-900 hover:text-neutral-100 lg:hidden"
+          >
+            <Menu className="size-5" aria-hidden="true" />
+            <span className="sr-only">Open tools menu</span>
+          </button>
 
           <Link
             to="/"

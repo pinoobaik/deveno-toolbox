@@ -12,6 +12,40 @@ import {
  */
 const SECONDS_UPPER_BOUND = 1e11
 
+/** Longest fragment of the user's own input echoed back inside an error. */
+const MAX_ECHO_LENGTH = 40
+
+const ISO_DATE_ONLY = /^\d{4}-\d{2}-\d{2}$/
+const DATE_TIME_PREFIX = /^\d{4}-\d{2}-\d{2}[T ]\d{2}:\d{2}/
+const ZONE_DESIGNATOR = /(?:Z\b|[+-]\d{2}:?\d{2}$|\b(?:GMT|UTC|[ECMP][DS]T)\b)/i
+
+export interface DateInputInterpretation {
+  /** Text actually handed to `Date.parse`. */
+  readonly normalized: string
+  /** True when the input carried no zone and was therefore read as local time. */
+  readonly assumesLocalTime: boolean
+}
+
+/**
+ * Decides how a date string should be read, and reports whether that reading
+ * depends on the browser timezone.
+ *
+ * ECMA-262 defines a date-only ISO form (`2024-01-15`) as UTC midnight, so it
+ * is pinned explicitly instead of being left to the local-time fallback that
+ * `Date.parse` applies to date-and-time forms without a zone.
+ */
+export function interpretDateInput(raw: string): DateInputInterpretation {
+  const text = raw.trim()
+
+  if (ISO_DATE_ONLY.test(text)) {
+    return { normalized: `${text}T00:00:00Z`, assumesLocalTime: false }
+  }
+
+  const normalized = DATE_TIME_PREFIX.test(text) ? text.replace(' ', 'T') : text
+
+  return { normalized, assumesLocalTime: !ZONE_DESIGNATOR.test(normalized) }
+}
+
 /**
  * Converts a Unix timestamp to a structured result. Accepts seconds or
  * milliseconds, integers or decimals, and never throws.
@@ -27,7 +61,7 @@ export function timestampToDate(input: string): TimestampResult {
     return {
       ok: false,
       kind: 'invalid-number',
-      message: `"${text}" is not a Unix timestamp. Use digits only, for example 1705314600.`,
+      message: `${echo(text)} is not a Unix timestamp. Use digits only, for example 1705314600.`,
     }
   }
 
@@ -61,14 +95,14 @@ export function dateToTimestamp(input: string): TimestampResult {
     return { ok: false, kind: 'empty', message: 'Enter a date to convert.' }
   }
 
-  const normalized = normalizeDateInput(text)
+  const { normalized } = interpretDateInput(text)
   const parsed = Date.parse(normalized)
 
   if (Number.isNaN(parsed)) {
     return {
       ok: false,
       kind: 'invalid-date',
-      message: `"${text}" could not be read as a date. Try 2024-01-15 14:30:00, 2024-01-15T14:30:00Z, or Mon, 15 Jan 2024 14:30:00 GMT.`,
+      message: `${echo(text)} could not be read as a date. Try 2024-01-15 14:30:00, 2024-01-15T14:30:00Z, or Mon, 15 Jan 2024 14:30:00 GMT.`,
     }
   }
 
@@ -89,10 +123,8 @@ export function buildResult(milliseconds: number): TimestampResultSuccess {
     seconds: Math.floor(milliseconds / 1000),
     milliseconds,
     localIso: toLocalIso(date),
-    utcIso: date.toISOString(),
     localDisplay: date.toLocaleString(undefined, LOCAL_DATE_OPTIONS),
     utcDisplay: `${date.toUTCString()}`,
-    isValidDate: true,
   }
 }
 
@@ -123,21 +155,13 @@ function formatLocalPart(date: Date): string {
   )
 }
 
-/**
- * `Date.parse` on `YYYY-MM-DD HH:mm:ss` is treated inconsistently across
- * engines, so the space separator is normalised to `T`.
- */
-function normalizeDateInput(text: string): string {
-  if (/^\d{4}-\d{2}-\d{2}[ ]\d{2}:\d{2}/.test(text)) {
-    return text.replace(' ', 'T')
-  }
+/** Quotes a short fragment of the input so the message stays readable. */
+function echo(text: string): string {
+  const collapsed = text.replace(/\s+/g, ' ')
 
-  return text
-}
-
-/** True when the string carries an explicit timezone designator. */
-export function hasExplicitTimezone(text: string): boolean {
-  return /(Z|[+-]\d{2}:?\d{2})$/i.test(text.trim())
+  return collapsed.length <= MAX_ECHO_LENGTH
+    ? `"${collapsed}"`
+    : `"${collapsed.slice(0, MAX_ECHO_LENGTH)}…"`
 }
 
 function pad(value: number): string {
