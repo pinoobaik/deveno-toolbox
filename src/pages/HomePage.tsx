@@ -10,6 +10,7 @@ import { IconButton } from '@/components/ui/IconButton'
 import { TextField } from '@/components/ui/TextField'
 import { APP_NAME } from '@/lib/constants'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
+import { useToolPreferences } from '@/lib/useToolPreferences'
 import { categoriesWithTools, tools } from '@/tools/registry'
 import { searchTools } from '@/tools/search'
 
@@ -35,6 +36,7 @@ export function HomePage() {
   useDocumentTitle(APP_NAME)
 
   const [query, setQuery] = useState('')
+  const { favoriteTools, recentTools } = useToolPreferences()
 
   const isFiltering = query.trim().length > 0
   const results = useMemo(() => searchTools(tools, query), [query])
@@ -69,6 +71,42 @@ export function HomePage() {
           disabled={query.length === 0}
         />
       </div>
+
+      {favoriteTools.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-neutral-100">
+            Favorites
+            <span className="ml-2 text-xs font-normal text-neutral-500">
+              {favoriteTools.length}
+            </span>
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {favoriteTools.map((tool) => (
+              <li key={tool.id}>
+                <ToolCard tool={tool} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
+
+      {recentTools.length > 0 ? (
+        <section className="flex flex-col gap-4">
+          <h2 className="text-sm font-semibold text-neutral-100">
+            Recent tools
+            <span className="ml-2 text-xs font-normal text-neutral-500">
+              {recentTools.length}
+            </span>
+          </h2>
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {recentTools.map((tool) => (
+              <li key={tool.id}>
+                <ToolCard tool={tool} />
+              </li>
+            ))}
+          </ul>
+        </section>
+      ) : null}
 
       <section aria-label="Available tools" className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-neutral-100">
