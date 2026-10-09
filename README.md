@@ -4,7 +4,7 @@ A collection of small, focused utilities for everyday development work. Everythi
 client-side in the browser: no backend, no database, no API, and no data ever leaves the page.
 
 The goal for this version is a solid foundation rather than a long feature list: a
-consistent app shell, routing, a reusable component set, and nine working tools grouped into
+consistent app shell, routing, a reusable component set, and fifteen working tools grouped into
 six categories.
 
 ## Features
@@ -50,6 +50,44 @@ six categories.
   `BigInt`, so values far beyond `2^53` stay exact in both directions. A digit that does not
   belong to the selected base is reported with its position; a sign or a base prefix on its
   own is not accepted as input.
+- **Regular Expression Tester** - write a pattern and some text against a JS regular expression,
+  with live syntax feedback as you type but matching only on an explicit press, so a
+  pathological pattern cannot stall the page on every keystroke. Only the `g`, `i`, `m`, `s`,
+  `u`, and `y` flags are accepted; the pattern and test text are capped (512 and 50,000
+  characters); matching is bounded to 1,000 matches; and a zero-width match still advances the
+  search so global and sticky patterns cannot loop forever. A result that hit the match limit
+  is called out instead of being silently presented as complete, and engine exception text is
+  replaced with a fixed message.
+- **URL Parser** - break a URL into scheme, username, password, host, port, pathname, search,
+  and hash using the WHATWG URL API, with a decode of the query string into pairs. The password
+  is masked by default with a reveal toggle, and an origin that is unreachable for that input
+  is labelled as opaque rather than printed as `null`. A base URL may be supplied to resolve
+  relative references; without one, a relative input or a broken scheme is reported as missing
+  or malformed instead of being guessed at. Input is capped at 8,192 characters and failures
+  never echo the submitted URL.
+- **Cron Expression Parser** - explain five-field cron expressions (minute, hour, day of month,
+  month, day of week) as plain-language schedules. Steps, ranges, lists, and `*` are accepted
+  against the real field bounds, with day 0 and day 7 meaning Sunday. No next-run times are
+  offered, because a next run depends on a timezone and the tool refuses to guess one. Fields,
+  and the summaries they expand to, are fully deterministic.
+- **HTML Entity Encoder & Decoder** - escape text so it can live inside HTML and decode named
+  and numeric entities back into characters. The five named entities (`amp`, `lt`, `gt`, `quot`,
+  `apos`) plus every decimal and hex numeric reference are handled in a single pass; an invalid
+  code point (a lone surrogate, or beyond U+10FFFF) becomes `U+FFFD` rather than being written
+  out raw. Encoding walks code points, so astral characters need no surrogates. Input is capped
+  at 100,000 characters.
+- **Color Converter** - convert between hex (`#RGB`, `#RGBA`, `#RRGGBB`, `#RRGGBBAA`),
+  `rgb()`/`rgba()`, and `hsl()`/`hsla()` in comma or space-slash form, with percentage channels,
+  a four-digit rounded alpha, and hue that wraps around 360. Every input reports its canonical
+  hex, rgb, and hsl together, each copyable, plus its channels and alpha. Out-of-range
+  channels (like `355` or `150%`) are refused rather than clamped, and neither decimal alpha
+  units nor CSS Color 4 keywords are accepted.
+- **Password Generator** - generate passwords from lowercase, uppercase, digit, and symbol
+  groups using `crypto.getRandomValues` with rejection sampling, so every selected group is
+  guaranteed to appear without biasing the draw. Length is fixed at 8-128. The output appears
+  once and is never stored or sent anywhere, and if secure randomness is unavailable the tool
+  fails with a fixed message instead of degrading to a weaker source. Its logic takes the byte
+  source as an argument, so the tests drive it with a deterministic RNG.
 
 Shared behaviour:
 
@@ -134,7 +172,11 @@ every tool has its own `logic.test.ts`, and the shared modules carry `registry.t
 `categories.test.ts`, `search.test.ts`, `breadcrumbs.test.ts`, `related.test.ts`, and
 `storage.test.ts`. The SHA tool is the one piece of asynchronous I/O in the catalog, so its
 tests temporarily replace `globalThis.crypto` with a stub that is missing or that rejects,
-which runs both the unavailable branch and the failure branch without a browser.
+which runs both the unavailable branch and the failure branch without a browser. The password
+generator takes its byte source as an argument, so its tests inject a deterministic RNG to
+check the one-of-each-group guarantee, the bounded-attempts failure path, and the near-uniform
+character distribution; the regex tester's truncation probe is pinned by a match that lands
+exactly on the allowed limit so an exact-limit run is never mislabeled.
 
 ## Build
 
@@ -213,8 +255,38 @@ dev-toolbox/
 │   │   │   ├── logic.ts
 │   │   │   ├── logic.test.ts
 │   │   │   └── types.ts
-│   │   └── number-base/
-│   │       ├── NumberBaseTool.tsx
+│   │   ├── number-base/
+│   │   │   ├── NumberBaseTool.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   ├── color-converter/
+│   │   │   ├── ColorConverter.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   ├── password-generator/
+│   │   │   ├── PasswordGenerator.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   ├── regex-tester/
+│   │   │   ├── RegexTester.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   ├── url-parser/
+│   │   │   ├── UrlParser.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   ├── cron-parser/
+│   │   │   ├── CronParser.tsx
+│   │   │   ├── logic.ts
+│   │   │   ├── logic.test.ts
+│   │   │   └── types.ts
+│   │   └── html-entities/
+│   │       ├── HtmlEntities.tsx
 │   │       ├── logic.ts
 │   │       ├── logic.test.ts
 │   │       └── types.ts
@@ -248,15 +320,18 @@ Error messages never embed the submitted document. JSON and date inputs are echo
 as a short, length capped fragment, and a `JSON.parse` failure is reduced to a fixed reason
 plus a position, so neither raw engine wording nor file contents reach the screen. The newer
 tools go further: every failure message is a fixed string that names only which segment,
-position, or base failed, so Base64 input, URL text, case-converted text, number input, and
-JWT content are never quoted back at all. Engine exceptions (`atob`, `JSON.parse`,
-`crypto.subtle`) are caught and mapped to those same fixed messages.
+position, or base failed, so Base64 input, URL text, case-converted text, number input, JWT
+content, regex patterns, cron fields, color strings, and generated passwords are never quoted
+back at all. Engine exceptions (`atob`, `JSON.parse`, `crypto.subtle`, `new RegExp`, `new URL`)
+are caught and mapped to those same fixed messages.
 
-Five of the six new tools recompute inside a `useMemo` keyed on their input, so they stay live
-without an effect, a subscription, or a debounce. The SHA tool is the exception:
-`crypto.subtle.digest` returns a promise, so it hashes on an explicit button press. Only SHA
-touches an API at all; every other tool is a pure string transformation, nothing is written to
-storage, and no network request is made by any of them.
+Most tools recompute inside a `useMemo` keyed on their input, so they stay live without an
+effect, a subscription, or a debounce. Two Phase 5 and 6 tools are explicit-press exceptions:
+the SHA tool, because `crypto.subtle.digest` returns a promise, and the regex tester, because
+matching runs on a button press so a pathological pattern cannot burn CPU on every render.
+Only SHA and the password generator touch an API at all (the latter for randomness, and it
+fails rather than falls back); every other tool is a pure string transformation, nothing is
+written to storage, and no network request is made by any of them.
 
 `src/tools/registry.ts` is the single source of truth for navigation, routing, and the tool
 index. Adding a tool means creating the folder, adding one entry to `tools`, and the sidebar,
@@ -371,12 +446,12 @@ recent. Both carry only the tool id.
 - [x] Text Case Converter
 - [x] Hash Generator
 - [x] Number Base Converter
-- [ ] Regex Tester
-- [ ] URL Parser
-- [ ] Color Converter
-- [ ] Password Generator
-- [ ] Cron Expression Parser
-- [ ] HTML Entities
+- [x] Regex Tester
+- [x] URL Parser
+- [x] Color Converter
+- [x] Password Generator
+- [x] Cron Expression Parser
+- [x] HTML Entities
 - [ ] Markdown Preview
 
 ## Conventions
