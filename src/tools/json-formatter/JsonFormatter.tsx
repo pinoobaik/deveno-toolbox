@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardBody, CardHeader } from '@/components/ui/Card'
 import { CopyButton } from '@/components/ui/CopyButton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Select } from '@/components/ui/Select'
 import { StatusMessage } from '@/components/ui/StatusMessage'
 import { TextArea } from '@/components/ui/TextArea'
 import { formatBytes, measureText } from '@/lib/text'
@@ -162,27 +163,15 @@ export function JsonFormatter({ tool }: ToolComponentProps) {
             }
             actions={
               <>
-                <label className="sr-only" htmlFor="json-indent">
-                  Indentation
-                </label>
-                <select
-                  id="json-indent"
-                  value={String(indent)}
-                  onChange={(event) => {
-                    const next = INDENT_OPTIONS.find(
-                      (option) => String(option.value) === event.target.value,
-                    )
-                    if (next !== undefined) setIndent(next.value)
-                  }}
+                <Select
+                  label="Indentation"
+                  hideLabel
+                  options={INDENT_OPTIONS}
+                  value={indent}
+                  onChange={setIndent}
                   disabled={outputMode !== 'pretty'}
-                  className="h-8 rounded-md border border-neutral-800 bg-neutral-900 px-2 text-xs text-neutral-300 disabled:opacity-50"
-                >
-                  {INDENT_OPTIONS.map((option) => (
-                    <option key={option.label} value={String(option.value)}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
+                  size="sm"
+                />
                 <CopyButton value={output} label="Copy" size="sm" disabled={output.length === 0} />
               </>
             }

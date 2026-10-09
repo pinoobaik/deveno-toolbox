@@ -1,22 +1,46 @@
+import { SearchX, X } from 'lucide-react'
+import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 
+import { CategoryNav } from '@/components/tools/CategoryNav'
 import { ToolCard } from '@/components/tools/ToolCard'
+import { Button } from '@/components/ui/Button'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { IconButton } from '@/components/ui/IconButton'
+import { TextField } from '@/components/ui/TextField'
 import { APP_NAME } from '@/lib/constants'
 import { useDocumentTitle } from '@/lib/useDocumentTitle'
-import { tools } from '@/tools/registry'
-import type { ToolCategory } from '@/types/tool'
+import { categoriesWithTools, tools } from '@/tools/registry'
+import { searchTools } from '@/tools/search'
 
-const CATEGORY_LABELS: Record<ToolCategory, string> = {
-  data: 'Data',
-  developer: 'Developer',
+/** Keeps a no-results message from echoing an unbounded query back to the page. */
+const MAX_ECHOED_QUERY_LENGTH = 60
+
+function displayQuery(query: string): string {
+  const trimmed = query.trim()
+  if (trimmed.length <= MAX_ECHOED_QUERY_LENGTH) return trimmed
+  return `${trimmed.slice(0, MAX_ECHOED_QUERY_LENGTH - 1)}…`
 }
 
-const CATEGORY_ORDER: readonly ToolCategory[] = ['data', 'developer']
-
+/**
+ * The catalog and its search box.
+ *
+ * The query lives in component state rather than a URL parameter: the category
+ * is already carried by the `/category/:categoryId` route, and search is a
+ * transient view of one page, so mirroring it into the URL would add a second
+ * piece of state to keep in sync without making the result shareable in a way
+ * anyone has asked for.
+ */
 export function HomePage() {
   useDocumentTitle(APP_NAME)
 
+  const [query, setQuery] = useState('')
+
+  const isFiltering = query.trim().length > 0
+  const results = useMemo(() => searchTools(tools, query), [query])
+
   const featuredTool = tools[0]
+  const populatedCategories = categoriesWithTools()
 
   return (
     <div className="flex flex-col gap-8">
@@ -28,36 +52,56 @@ export function HomePage() {
         </p>
       </section>
 
+      <div className="flex items-end gap-2">
+        <TextField
+          label="Search tools"
+          type="text"
+          placeholder="Name, description, or keyword"
+          autoComplete="off"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          containerClassName="min-w-0 flex-1"
+        />
+        <IconButton
+          label="Clear search"
+          icon={<X className="size-4" aria-hidden="true" />}
+          onClick={() => setQuery('')}
+          disabled={query.length === 0}
+        />
+      </div>
+
       <section aria-label="Available tools" className="flex flex-col gap-4">
         <h2 className="text-sm font-semibold text-neutral-100">
           Available tools
-          <span className="ml-2 text-xs font-normal text-neutral-500">{tools.length} total</span>
+          <span className="ml-2 text-xs font-normal text-neutral-500">
+            {isFiltering ? `${results.length} of ${tools.length}` : `${tools.length} total`}
+          </span>
         </h2>
 
-        <ul className="grid gap-3 sm:grid-cols-2">
-          {tools.map((tool) => (
-            <li key={tool.id}>
-              <ToolCard tool={tool} />
-            </li>
-          ))}
-        </ul>
-      </section>
-
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-neutral-100">Categories</h2>
-        <ul className="flex flex-wrap gap-2 text-xs text-neutral-400">
-          {CATEGORY_ORDER.map((category) => {
-            const count = tools.filter((tool) => tool.category === category).length
-            if (count === 0) return null
-
-            return (
-              <li key={category} className="rounded-full border border-neutral-800 px-2.5 py-1">
-                {CATEGORY_LABELS[category]} · {count}
+        {results.length === 0 ? (
+          <EmptyState
+            icon={<SearchX className="size-6" />}
+            title="No tools match your search"
+            description={`Nothing in the catalog matches “${displayQuery(query)}”. Try a shorter term, or clear the search to see everything again.`}
+            action={<Button onClick={() => setQuery('')}>Clear search</Button>}
+          />
+        ) : (
+          <ul className="grid gap-3 sm:grid-cols-2">
+            {results.map((tool) => (
+              <li key={tool.id}>
+                <ToolCard tool={tool} />
               </li>
-            )
-          })}
-        </ul>
+            ))}
+          </ul>
+        )}
       </section>
+
+      {populatedCategories.length > 0 ? (
+        <section className="flex flex-col gap-3">
+          <h2 className="text-sm font-semibold text-neutral-100">Categories</h2>
+          <CategoryNav />
+        </section>
+      ) : null}
 
       {featuredTool === undefined ? null : (
         <p className="text-xs text-neutral-600">

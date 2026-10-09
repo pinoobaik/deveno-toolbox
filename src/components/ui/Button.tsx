@@ -12,7 +12,8 @@ interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   iconEnd?: ReactNode
 }
 
-const VARIANT_CLASSES: Record<ButtonVariant, string> = {
+/** Shared so `IconButton` can reuse the same variants without restyling them. */
+export const VARIANT_CLASSES: Record<ButtonVariant, string> = {
   primary:
     'bg-sky-600 text-white hover:bg-sky-500 active:bg-sky-600 disabled:hover:bg-sky-600',
   secondary:
