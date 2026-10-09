@@ -117,8 +117,13 @@ describe('toolsInCategory', () => {
     expect(result.map((tool) => tool.id)).toEqual(expected.map((tool) => tool.id))
   })
 
-  it('returns an empty list for a category with no tools', () => {
-    expect(toolsInCategory('developer')).toEqual([])
+  it('returns only developer tools for the developer category', () => {
+    const result = toolsInCategory('developer')
+
+    expect(result.length).toBe(3)
+    for (const tool of result) {
+      expect(tool.category).toBe('developer')
+    }
   })
 })
 
@@ -127,9 +132,11 @@ describe('countToolsByCategory', () => {
     const counts = countToolsByCategory()
 
     expect(counts.size).toBe(TOOL_CATEGORIES.length)
-    expect(counts.get('developer')).toBe(0)
-    expect(counts.get('encoding')).toBe(3)
+    expect(counts.get('developer')).toBe(3)
+    expect(counts.get('encoding')).toBe(4)
     expect(counts.get('data')).toBe(1)
+    expect(counts.get('generators')).toBe(3)
+    expect(counts.get('converters')).toBe(3)
   })
 
   it('totals the whole catalog', () => {
@@ -148,10 +155,10 @@ describe('countToolsByCategory', () => {
 })
 
 describe('categoriesWithTools', () => {
-  it('omits categories that have no tools, so no dead heading is rendered', () => {
+  it('includes every populated category, so no dead heading is rendered', () => {
     const ids = categoriesWithTools().map((category) => category.id)
 
-    expect(ids).not.toContain('developer')
+    expect(ids).toContain('developer')
     expect(ids).toContain('encoding')
     expect(ids).toContain('text')
   })
