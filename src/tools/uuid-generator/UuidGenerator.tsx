@@ -85,51 +85,52 @@ export function UuidGenerator({ tool }: ToolComponentProps) {
         </StatusMessage>
       ) : null}
 
-      <section aria-label="Generated UUIDs">
-        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-sm font-semibold text-neutral-100">
-            Result
-            <span className="ml-2 text-xs font-normal text-neutral-500">
-              {uuids.length > 0
-                ? `${uuids.length} UUID${uuids.length > 1 ? 's' : ''}`
-                : 'No UUIDs yet'}
-            </span>
-          </h2>
-          <CopyButton
-            value={uuids.join('\n')}
-            label="Copy all"
-            size="sm"
-            disabled={uuids.length === 0}
-          />
-        </div>
-
-        {uuids.length > 0 ? (
-          <ul className="flex flex-col gap-2">
-            {uuids.map((uuid) => (
-              <li
-                key={uuid}
-                className="flex items-center justify-between gap-3 rounded-md border border-neutral-800 bg-neutral-900/40 px-3 py-2"
-              >
-                <code className="scrollbar-subtle min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm text-neutral-200">
-                  {uuid}
-                </code>
-                <CopyButton
-                  value={uuid}
-                  ariaLabel={`Copy UUID ${uuid}`}
-                  size="sm"
-                  variant="ghost"
-                />
-              </li>
-            ))}
-          </ul>
-        ) : (
-          <EmptyState
-            icon={<FingerprintPattern className="size-6" />}
-            title="Nothing generated yet"
-            description="Pick an amount and press Generate. UUIDs come from crypto.randomUUID(), so no custom randomness is involved."
-          />
-        )}
-      </section>
+      <Card as="section">
+        <CardHeader
+          title="Result"
+          description={
+            uuids.length > 0
+              ? `${uuids.length} UUID${uuids.length > 1 ? 's' : ''} generated.`
+              : 'No UUIDs yet.'
+          }
+          actions={
+            <CopyButton
+              value={uuids.join('\n')}
+              label="Copy all"
+              size="sm"
+              disabled={uuids.length === 0}
+            />
+          }
+        />
+        <CardBody>
+          {uuids.length > 0 ? (
+            <ul className="flex flex-col gap-2">
+              {uuids.map((uuid) => (
+                <li
+                  key={uuid}
+                  className="flex items-center justify-between gap-3 rounded-md border border-neutral-800 bg-neutral-900/40 px-3 py-2"
+                >
+                  <code className="scrollbar-subtle min-w-0 flex-1 overflow-x-auto whitespace-nowrap font-mono text-sm text-neutral-200">
+                    {uuid}
+                  </code>
+                  <CopyButton
+                    value={uuid}
+                    ariaLabel={`Copy UUID ${uuid}`}
+                    size="sm"
+                    variant="ghost"
+                  />
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <EmptyState
+              icon={<FingerprintPattern className="size-6" />}
+              title="Nothing generated yet"
+              description="Pick an amount and press Generate. UUIDs come from crypto.randomUUID(), so no custom randomness is involved."
+            />
+          )}
+        </CardBody>
+      </Card>
     </ToolLayout>
   )
 }
