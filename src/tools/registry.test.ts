@@ -118,7 +118,7 @@ describe('toolsInCategory', () => {
   })
 
   it('returns an empty list for a category with no tools', () => {
-    expect(toolsInCategory('encoding')).toEqual([])
+    expect(toolsInCategory('developer')).toEqual([])
   })
 })
 
@@ -127,7 +127,8 @@ describe('countToolsByCategory', () => {
     const counts = countToolsByCategory()
 
     expect(counts.size).toBe(TOOL_CATEGORIES.length)
-    expect(counts.get('encoding')).toBe(0)
+    expect(counts.get('developer')).toBe(0)
+    expect(counts.get('encoding')).toBe(3)
     expect(counts.get('data')).toBe(1)
   })
 
@@ -150,8 +151,9 @@ describe('categoriesWithTools', () => {
   it('omits categories that have no tools, so no dead heading is rendered', () => {
     const ids = categoriesWithTools().map((category) => category.id)
 
-    expect(ids).not.toContain('encoding')
-    expect(ids).not.toContain('text')
+    expect(ids).not.toContain('developer')
+    expect(ids).toContain('encoding')
+    expect(ids).toContain('text')
   })
 
   it('keeps declared order', () => {

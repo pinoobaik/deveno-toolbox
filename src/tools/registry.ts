@@ -1,4 +1,14 @@
-import { Braces, Clock, FingerprintPattern } from 'lucide-react'
+import {
+  Binary,
+  Braces,
+  CaseUpper,
+  Clock,
+  FileCode,
+  FingerprintPattern,
+  Hash,
+  KeyRound,
+  Link2,
+} from 'lucide-react'
 import { lazy, type ComponentType, type LazyExoticComponent } from 'react'
 
 import { TOOL_CATEGORIES, type ToolCategoryDescriptor } from '@/tools/categories'
@@ -18,6 +28,33 @@ export interface ToolEntry extends ToolDefinition {
  */
 export const tools: readonly ToolEntry[] = [
   {
+    id: 'base64',
+    name: 'Base64 Encoder & Decoder',
+    description: 'Encode text to Base64 and decode Base64 back to UTF-8 text.',
+    icon: FileCode,
+    category: 'encoding',
+    keywords: ['base64', 'b64', 'encode', 'decode', 'atob', 'btoa', 'utf-8', 'unicode'],
+    component: lazy(() => import('./base64/Base64Tool')),
+  },
+  {
+    id: 'url-encoder',
+    name: 'URL Encoder',
+    description: 'Percent-encode and decode URL text, as a full URI or one component.',
+    icon: Link2,
+    category: 'encoding',
+    keywords: ['url', 'uri', 'encode', 'decode', 'percent', 'query string', 'escape', 'fragment'],
+    component: lazy(() => import('./url-encoder/UrlEncoder')),
+  },
+  {
+    id: 'jwt-decoder',
+    name: 'JWT Decoder',
+    description: 'Read the header and payload of a JSON Web Token without verifying it.',
+    icon: KeyRound,
+    category: 'encoding',
+    keywords: ['jwt', 'token', 'json web token', 'claims', 'header', 'payload', 'decode', 'auth'],
+    component: lazy(() => import('./jwt-decoder/JwtDecoder')),
+  },
+  {
     id: 'json-formatter',
     name: 'JSON Formatter',
     description: 'Format, minify and validate JSON with clear error messages.',
@@ -36,6 +73,24 @@ export const tools: readonly ToolEntry[] = [
     component: lazy(() => import('./json-formatter/JsonFormatter')),
   },
   {
+    id: 'text-case',
+    name: 'Text Case Converter',
+    description: 'Change text to lowercase, UPPERCASE, Title Case, or Sentence case.',
+    icon: CaseUpper,
+    category: 'text',
+    keywords: [
+      'text',
+      'case',
+      'lowercase',
+      'uppercase',
+      'title case',
+      'sentence case',
+      'capitalize',
+      'transform',
+    ],
+    component: lazy(() => import('./text-case/TextCase')),
+  },
+  {
     id: 'uuid-generator',
     name: 'UUID Generator',
     description: 'Generate version 4 UUIDs one at a time or in batches.',
@@ -43,6 +98,15 @@ export const tools: readonly ToolEntry[] = [
     category: 'generators',
     keywords: ['uuid', 'guid', 'v4', 'random', 'identifier', 'unique id'],
     component: lazy(() => import('./uuid-generator/UuidGenerator')),
+  },
+  {
+    id: 'sha-digest',
+    name: 'SHA Hash Generator',
+    description: 'Hash text with SHA-1, SHA-256, SHA-384, or SHA-512 using Web Crypto.',
+    icon: Hash,
+    category: 'generators',
+    keywords: ['sha', 'sha256', 'hash', 'digest', 'checksum', 'sha1', 'sha512', 'web crypto'],
+    component: lazy(() => import('./sha-digest/ShaDigest')),
   },
   {
     id: 'timestamp-converter',
@@ -61,6 +125,25 @@ export const tools: readonly ToolEntry[] = [
       'timezone',
     ],
     component: lazy(() => import('./timestamp-converter/TimestampConverter')),
+  },
+  {
+    id: 'number-base',
+    name: 'Number Base Converter',
+    description: 'Convert integers between binary, octal, decimal, and hexadecimal.',
+    icon: Binary,
+    category: 'converters',
+    keywords: [
+      'number base',
+      'binary',
+      'octal',
+      'hexadecimal',
+      'hex',
+      'base 2',
+      'base 16',
+      'bigint',
+      'radix',
+    ],
+    component: lazy(() => import('./number-base/NumberBaseTool')),
   },
 ]
 
