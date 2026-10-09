@@ -1,11 +1,15 @@
 // @vitest-environment jsdom
 import { render, screen } from '@testing-library/react'
-import { describe, expect, it, vi } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { CopyButton } from '@/components/ui/CopyButton'
 import { userEvent } from '@/test/test-utils'
 
 describe('CopyButton', () => {
+  afterEach(() => {
+    vi.unstubAllGlobals()
+  })
+
   it('copies the value and shows copied feedback', async () => {
     const writeText = vi.fn().mockResolvedValue(undefined)
     vi.stubGlobal('navigator', { clipboard: { writeText } })
@@ -21,12 +25,14 @@ describe('CopyButton', () => {
 
   it('shows failed feedback when the clipboard is unavailable', async () => {
     vi.stubGlobal('navigator', {})
-    vi.spyOn(document, 'execCommand').mockReturnValue(false)
+    const original = document.execCommand
+    document.execCommand = ((() => false) as unknown) as typeof document.execCommand
     const user = userEvent.setup()
 
     render(<CopyButton label="Copy" value="hello" />)
     await user.click(screen.getByRole('button', { name: 'Copy' }))
     expect(await screen.findByRole('button', { name: 'Failed' })).toBeInTheDocument()
+    document.execCommand = original
   })
 
   it('is disabled for an empty value or an explicit disabled flag', () => {
