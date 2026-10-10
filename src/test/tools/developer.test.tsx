@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 
 import { renderApp, screen, userEvent, within } from '@/test/test-utils'

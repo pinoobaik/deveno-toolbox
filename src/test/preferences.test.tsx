@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { describe, expect, it } from 'vitest'
 
 import { STORAGE_KEY } from '@/lib/storage'

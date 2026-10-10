@@ -1,4 +1,3 @@
-// @vitest-environment jsdom
 import { fireEvent } from '@testing-library/react'
 import { describe, expect, it } from 'vitest'
 
