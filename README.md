@@ -151,8 +151,8 @@ Other scripts:
 npm run build      # type-check with tsc -b, then build to dist/
 npm run preview    # serve the production build locally
 npm run typecheck  # type-check only
-npm run test       # run the logic tests once
-npm run test:watch # run the logic tests in watch mode
+npm run test       # run the test suite once
+npm run test:watch # run the test suite in watch mode
 ```
 
 ## Tests
@@ -161,12 +161,12 @@ npm run test:watch # run the logic tests in watch mode
 npm run test
 ```
 
-Vitest covers the pure `logic.ts` layer of each tool, plus the shared registry, category,
-search, breadcrumb, related-tool, and storage modules, which is where the parsing, conversion,
-ranking, selection, and normalization rules live. Component behaviour is exercised through
-those functions rather than through DOM-level tests: the Vitest environment is `node`, so
-rendering a component is not supported yet. The storage boundary is injectable, so
-`storage.test.ts` simulates unavailable storage and throwing
+Vitest covers each tool's pure `logic.ts` layer and the shared registry, category, search,
+breadcrumb, related-tool, and storage modules, which is where the parsing, conversion, ranking,
+selection, and normalization rules live. The test environment is `jsdom`, and the component and
+integration tests under `src/test` render the real app with React Testing Library, driving it
+with `user-event` -- lazy tool chunks, navigation, preferences, and clipboard flows included.
+The storage boundary is injectable, so `storage.test.ts` simulates unavailable storage and throwing
 `getItem`/`setItem`/`removeItem` without a DOM. Test files sit next to the code they cover:
 every tool has its own `logic.test.ts`, and the shared modules carry `registry.test.ts`,
 `categories.test.ts`, `search.test.ts`, `breadcrumbs.test.ts`, `related.test.ts`, and
