@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 
-import { parseUrl } from './logic'
+import { hrefWithoutCredentials, parseUrl } from './logic'
 import { MAX_URL_CHARS } from './types'
 
 describe('parseUrl', () => {
@@ -160,5 +160,49 @@ describe('parseUrl', () => {
     expect(result.url.hasAuthority).toBe(false)
     expect(result.url.origin).toBe('null')
     expect(result.url.pathname).toBe('someone@example.com')
+  })
+})
+
+describe('hrefWithoutCredentials', () => {
+  function parse(input: string) {
+    const result = parseUrl(input, '')
+    if (!result.ok) throw new Error(`Expected "${input}" to parse.`)
+    return result.url
+  }
+
+  it('returns the href unchanged when there are no credentials', () => {
+    expect(hrefWithoutCredentials(parse('https://example.com/a?b=1#c'))).toBe(
+      'https://example.com/a?b=1#c',
+    )
+  })
+
+  it('strips the username and password but keeps origin, path, query, and fragment', () => {
+    expect(
+      hrefWithoutCredentials(parse('https://user:secret@example.com:8080/a/b?q=1#frag')),
+    ).toBe('https://example.com:8080/a/b?q=1#frag')
+  })
+
+  it('strips a username that has no password', () => {
+    expect(hrefWithoutCredentials(parse('https://user@example.com/path'))).toBe(
+      'https://example.com/path',
+    )
+  })
+
+  it('strips a password that has no username', () => {
+    expect(hrefWithoutCredentials(parse('https://:secret@example.com/path'))).toBe(
+      'https://example.com/path',
+    )
+  })
+
+  it('omits credentials while keeping an implicit root path', () => {
+    expect(hrefWithoutCredentials(parse('https://user:secret@example.com'))).toBe(
+      'https://example.com/',
+    )
+  })
+
+  it('leaves an opaque scheme without an authority untouched', () => {
+    expect(hrefWithoutCredentials(parse('mailto:someone@example.com'))).toBe(
+      'mailto:someone@example.com',
+    )
   })
 })

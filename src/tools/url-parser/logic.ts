@@ -1,4 +1,10 @@
-import { MAX_URL_CHARS, type UrlParseErrorKind, type UrlParseFailure, type UrlParseResult } from './types'
+import {
+  MAX_URL_CHARS,
+  type ParsedUrl,
+  type UrlParseErrorKind,
+  type UrlParseFailure,
+  type UrlParseResult,
+} from './types'
 
 const EMPTY_MESSAGE = 'Nothing to parse. Enter a URL first.'
 
@@ -75,4 +81,19 @@ export function parseUrl(input: string, baseInput: string): UrlParseResult {
       hasAuthority: parsed.hostname.length > 0,
     },
   }
+}
+
+/**
+ * The URL with any embedded username and password removed, so a credential
+ * that was pasted in can never leave the tool again through a copy.
+ *
+ * Credentials only exist alongside an authority, so a URL that carries them
+ * always has a concrete origin to rebuild from. A URL without credentials is
+ * returned verbatim, which keeps opaque schemes (`mailto:`) intact.
+ */
+export function hrefWithoutCredentials(url: ParsedUrl): string {
+  if (url.username.length === 0 && url.password.length === 0) return url.href
+
+  const origin = url.origin === null || url.origin === 'null' ? '' : url.origin
+  return `${origin}${url.pathname}${url.search}${url.hash}`
 }

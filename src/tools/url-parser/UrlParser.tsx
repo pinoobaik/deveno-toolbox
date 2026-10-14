@@ -10,8 +10,8 @@ import { StatusMessage } from '@/components/ui/StatusMessage'
 import { TextField } from '@/components/ui/TextField'
 import type { ToolComponentProps } from '@/types/tool'
 
-import { parseUrl } from './logic'
-import { MAX_URL_CHARS, type UrlParseErrorKind } from './types'
+import { hrefWithoutCredentials, parseUrl } from './logic'
+import { MAX_URL_CHARS, type ParsedUrl, type UrlParseErrorKind } from './types'
 
 const ERROR_TITLES: Record<UrlParseErrorKind, string> = {
   empty: 'Nothing to parse',
@@ -37,20 +37,11 @@ function Row({ label, value }: { readonly label: string; readonly value: string 
   )
 }
 
-function buildRows(url: {
-  readonly href: string
-  readonly origin: string | null
-  readonly protocol: string
-  readonly hostname: string
-  readonly port: string
-  readonly pathname: string
-  readonly search: string
-  readonly hash: string
-  readonly username: string
-  readonly password: string
-}): BreakdownRow[] {
+function buildRows(url: ParsedUrl): BreakdownRow[] {
   return [
-    { label: 'URL', value: url.href },
+    // The URL row is shown without credentials, so the password never appears
+    // here even before its own row is revealed.
+    { label: 'URL', value: hrefWithoutCredentials(url) },
     { label: 'Origin', value: url.origin === null || url.origin === 'null' ? '(opaque)' : url.origin },
     { label: 'Protocol', value: url.protocol },
     { label: 'Hostname', value: url.hostname },
@@ -154,7 +145,7 @@ export function UrlParser({ tool }: ToolComponentProps) {
             }
             actions={
               <CopyButton
-                value={result.ok ? result.url.href : ''}
+                value={result.ok ? hrefWithoutCredentials(result.url) : ''}
                 label="Copy URL"
                 size="sm"
                 disabled={!result.ok}

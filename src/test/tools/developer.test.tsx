@@ -1,6 +1,10 @@
-import { describe, expect, it } from 'vitest'
+import { afterEach, describe, expect, it, vi } from 'vitest'
 
 import { renderApp, screen, userEvent, within } from '@/test/test-utils'
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
 
 describe('Regular Expression Tester', () => {
   it('lists matches with positions for a compiled pattern', async () => {
@@ -52,6 +56,43 @@ describe('URL Parser', () => {
     await user.click(screen.getByRole('button', { name: 'Reveal' }))
     expect(screen.getByText('secret')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: 'Hide password' })).toBeInTheDocument()
+  })
+
+  it('copies the URL with the username and password removed', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+    renderApp({ route: '/tools/url-parser' })
+    await screen.findByRole('heading', { level: 1, name: 'URL Parser' })
+
+    await user.type(
+      screen.getByRole('textbox', { name: 'URL' }),
+      'https://user:secret@example.com:8080/a/b?q=1#frag',
+    )
+
+    // The breakdown's URL row is credential-free too, so the password never
+    // reaches the DOM before it is deliberately revealed.
+    expect(screen.getByText('https://example.com:8080/a/b?q=1#frag')).toBeInTheDocument()
+    expect(screen.queryByText(/user:secret/)).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: 'Copy URL' }))
+
+    expect(writeText).toHaveBeenCalledTimes(1)
+    const copied = writeText.mock.calls[0]?.[0]
+    expect(copied).toBe('https://example.com:8080/a/b?q=1#frag')
+    expect(copied).not.toContain('secret')
+    expect(copied).not.toContain('user')
+  })
+
+  it('copies a credential-free URL unchanged', async () => {
+    const user = userEvent.setup()
+    const writeText = vi.spyOn(navigator.clipboard, 'writeText').mockResolvedValue(undefined)
+    renderApp({ route: '/tools/url-parser' })
+    await screen.findByRole('heading', { level: 1, name: 'URL Parser' })
+
+    await user.type(screen.getByRole('textbox', { name: 'URL' }), 'https://example.com/a?b=1#c')
+    await user.click(screen.getByRole('button', { name: 'Copy URL' }))
+
+    expect(writeText).toHaveBeenCalledWith('https://example.com/a?b=1#c')
   })
 
   it('asks for a base URL when the address is relative', async () => {
