@@ -1,4 +1,5 @@
 import { useCallback, useState, type ReactNode } from 'react'
+import { useLocation } from 'react-router-dom'
 
 import { AppErrorBoundary } from '@/components/layout/AppErrorBoundary'
 import { Header } from '@/components/layout/Header'
@@ -11,6 +12,7 @@ interface AppLayoutProps {
 
 export function AppLayout({ children }: AppLayoutProps) {
   const [isMobileNavOpen, setMobileNavOpen] = useState(false)
+  const location = useLocation()
 
   const openMobileNav = useCallback(() => setMobileNavOpen(true), [])
   const closeMobileNav = useCallback(() => setMobileNavOpen(false), [])
@@ -31,7 +33,12 @@ export function AppLayout({ children }: AppLayoutProps) {
         </aside>
 
         <main id="main-content" tabIndex={-1} className="min-w-0 flex-1 py-6">
-          <AppErrorBoundary>{children}</AppErrorBoundary>
+          {/*
+           * Keying by pathname remounts the boundary on every route change, so
+           * an error caught on one route is cleared as soon as the visitor
+           * navigates elsewhere. The retry action stays as the in-place reset.
+           */}
+          <AppErrorBoundary key={location.pathname}>{children}</AppErrorBoundary>
         </main>
       </div>
 
