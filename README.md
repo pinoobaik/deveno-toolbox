@@ -7,6 +7,8 @@ The goal for this version is a solid foundation rather than a long feature list:
 consistent app shell, routing, a reusable component set, and fifteen working tools grouped into
 six categories.
 
+A live build is deployed on Vercel at <https://deveno-toolbox.vercel.app>.
+
 ## Features
 
 - **JSON Formatter** - pretty print, minify, sort keys, validate. Invalid input reports a
@@ -189,7 +191,8 @@ npm run preview
 `dist/`.
 
 Because the app uses client-side routing, a static host must rewrite unknown paths to
-`index.html` so deep links like `/tools/json-formatter` resolve.
+`index.html` so deep links like `/tools/json-formatter` resolve. On Vercel that rewrite lives in
+`vercel.json` and is applied to every request.
 
 ## Project structure
 
