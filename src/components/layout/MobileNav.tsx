@@ -81,7 +81,8 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
     if (panel === null) return
 
     const focusable = [...panel.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR)].filter(
-      (element) => element.getClientRects().length > 0,
+      (element) =>
+        typeof element.checkVisibility === 'function' ? element.checkVisibility() : true,
     )
 
     const first = focusable[0]
@@ -89,31 +90,34 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
     if (first === undefined || last === undefined) return
 
     const active = document.activeElement
-    const isInsidePanel = active instanceof Node && panel.contains(active)
+    const index = active instanceof HTMLElement ? focusable.indexOf(active) : -1
 
-    if (!isInsidePanel) {
+    // Focus on the panel itself (or a stray node) is pulled to the matching edge.
+    if (index === -1) {
       event.preventDefault()
-      first.focus()
+      const edge = event.shiftKey ? last : first
+      edge.focus()
       return
     }
 
-    if (event.shiftKey && active === first) {
+    if (event.shiftKey && index === 0) {
       event.preventDefault()
       last.focus()
       return
     }
 
-    if (!event.shiftKey && active === last) {
+    if (!event.shiftKey && index === focusable.length - 1) {
       event.preventDefault()
       first.focus()
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 lg:hidden">
+    <div className="fixed inset-0 z-50 lg:hidden" onKeyDown={trapFocus}>
       <button
         type="button"
-        aria-label="Close tools menu"
+        tabIndex={-1}
+        aria-label="Close navigation overlay"
         onClick={onClose}
         className="absolute inset-0 h-full w-full bg-neutral-950/70 backdrop-blur-sm"
       />
@@ -124,7 +128,6 @@ export function MobileNav({ open, onClose }: MobileNavProps) {
         aria-modal="true"
         aria-label="Tools menu"
         tabIndex={-1}
-        onKeyDown={trapFocus}
         className="absolute inset-y-0 left-0 flex w-72 max-w-[85vw] flex-col border-r border-neutral-800 bg-neutral-950 px-3 py-4"
       >
         <div className="mb-4 flex items-center justify-between px-1">
