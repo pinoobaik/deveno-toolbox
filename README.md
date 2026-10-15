@@ -9,6 +9,8 @@ six categories.
 
 A live build is deployed on Vercel at <https://deveno-toolbox.vercel.app>.
 
+![Dev Toolbox homepage showing tool search, categories, and recent developer utilities](docs/images/deveno-toolbox-home.png)
+
 ## Features
 
 - **JSON Formatter** - pretty print, minify, sort keys, validate. Invalid input reports a
